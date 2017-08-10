@@ -39,6 +39,7 @@ class gardena
     const PROPERTY_SOIL_HUMIDITY = "humidity";
     const PROPERTY_LIGHTLEVEL = "light";
     const PROPERTY_VALVE_OPEN = "valve_open";
+    const PROPERTY_ERROR= "error";
     
     const ABILITY_CONNECTIONSTATE = "radio";
     const ABILITY_BATTERY = "battery";
@@ -161,12 +162,30 @@ class gardena
         if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == "204") //success
             return true;
             
-        return json_encode($result);
+	$j = (object)[];
+	$j->success= false;
+	$j->reponse_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	$j->result = $result;
+        return json_encode($j,JSON_PRETTY_PRINT);
     }       
+
+    function getMowerError($device) {
+
+        return $this->getPropertyData($device, $this::CATEGORY_MOWER, $this::PROPERTY_ERROR) -> value;
+    }
     
     function getMowerState($device)
     {
         return $this->getPropertyData($device, $this::CATEGORY_MOWER, $this::PROPERTY_STATUS) -> value;
+    }
+
+    function getDeviceStatusReportCsv($device) {
+        $result = "";
+        foreach ($device -> status_report_history as $entry)
+        {               
+             $result .= $entry -> timestamp . "\t" . $entry -> level. "\t" . $entry -> message . "\n";
+        }                                                           
+        return $result;
     }
     
     function getDeviceStatusReportFriendly($device)                                        
